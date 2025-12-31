@@ -18,12 +18,10 @@ app.get('/', (req, res) => {
 
 
 app.post('/get-info', async (req, res) => {
-  const city = req.body.city; // Получаем название города из формы
+  const city = req.body.city;
 
-  // Ссылки на API (используем ключи из .env)
   const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.WEATHER_API_KEY}`;
   const newsUrl = `https://newsapi.org/v2/everything?q=${city}&language=ru&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
-  // Для 2GIS ищем "достопримечательности + город"
   const placesUrl = `https://catalog.api.2gis.com/3.0/items?q=достопримечательности ${city}&key=${process.env.TWOGIS_API_KEY}`;
 
   try {
@@ -69,6 +67,47 @@ app.post('/get-info', async (req, res) => {
     }
 
     res.render('index', { error: errorMessage });
+  }
+});
+
+
+// Endpoint for testing with Postman
+app.get('/api/weather', async (req, res) => {
+  const city = req.query.city;
+
+  if (!city) {
+    return res.status(400).json({ error: "Please, specify a city name" });
+  }
+
+  try {
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.WEATHER_API_KEY}`;
+    const newsUrl = `https://newsapi.org/v2/everything?q=${city}&language=ru&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
+    const placesUrl = `https://catalog.api.2gis.com/3.0/items?q=достопримечательности ${city}&key=${process.env.TWOGIS_API_KEY}`;
+
+    const [weatherResponse, newsResponse, placesResponse] = await Promise.all([
+      axios.get(weatherUrl),
+      axios.get(newsUrl),
+      axios.get(placesUrl)
+    ]);
+
+    const responseData = {
+      weather: {
+        city: weatherResponse.data.name,
+        temp: weatherResponse.data.main.temp,
+        condition: weatherResponse.data.weather[0].description
+      },
+      news: newsResponse.data.articles.slice(0, 3),
+      places: placesResponse.data.result.items.slice(0, 3)
+    };
+
+    res.status(200).json(responseData);
+
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      res.status(404).json({ error: "City not found" });
+    } else {
+      res.status(500).json({ error: "Server error" });
+    }
   }
 });
 
