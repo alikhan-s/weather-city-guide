@@ -101,7 +101,7 @@ Per the assignment requirements, the backend logic exposes a JSON endpoint for t
 **Response:**
 ```json
 {
-    "error": "Please provide a city name"
+    "error": "Please, specify a city name"
 }
 ```
 ![img_2.png](public/images/img_2.png)
