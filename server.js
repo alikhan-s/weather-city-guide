@@ -12,6 +12,18 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
 
+const CITY_NEWS_MAPPING = {
+  "Astana": "Астана",                    "Almaty": "Алматы",
+  "Atyrau": "Атырау",                    "Aktau": "Актау",
+  "Aktobe": "Актобе",                    "Zhezkazgan": "Жезказган",
+  "Kapsagai": "Капшагай",                "Karaganda": "Караганда",
+  "Kostanay": "Костанай",                "Kokshetau": "Кокшетау",
+  "Kyzlorda": "Кызылорда",               "Pavlodar": "Павлодар",
+  "Petropavlovsk": "Петропавловск",      "Taraz": "Тараз",
+  "Turkestan": "Туркестан", "Uralsk":    "Уральск",
+  "Ust-Kamenogorsk": "Усть-Каменогорск", "Shymkent": "Шымкент"
+}
+
 app.get('/', (req, res) => {
   res.render('index', { error: null });
 });
@@ -20,8 +32,10 @@ app.get('/', (req, res) => {
 app.post('/get-info', async (req, res) => {
   const city = req.body.city;
 
+  const newsCity = CITY_NEWS_MAPPING[city] || city;
+
   const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.WEATHER_API_KEY}`;
-  const newsUrl = `https://newsapi.org/v2/everything?q=${city}&language=ru&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
+  const newsUrl = `https://newsapi.org/v2/everything?q=${newsCity}&language=ru&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
   const placesUrl = `https://catalog.api.2gis.com/3.0/items?q=достопримечательности ${city}&key=${process.env.TWOGIS_API_KEY}`;
 
   try {
@@ -75,13 +89,15 @@ app.post('/get-info', async (req, res) => {
 app.get('/api/weather', async (req, res) => {
   const city = req.query.city;
 
+  const newsCity = CITY_NEWS_MAPPING[city] || city;
+
   if (!city) {
     return res.status(400).json({ error: "Please, specify a city name" });
   }
 
   try {
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.WEATHER_API_KEY}`;
-    const newsUrl = `https://newsapi.org/v2/everything?q=${city}&language=ru&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
+    const newsUrl = `https://newsapi.org/v2/everything?q=${newsCity}&language=ru&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;
     const placesUrl = `https://catalog.api.2gis.com/3.0/items?q=достопримечательности ${city}&key=${process.env.TWOGIS_API_KEY}`;
 
     const [weatherResponse, newsResponse, placesResponse] = await Promise.all([
